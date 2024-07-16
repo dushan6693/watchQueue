@@ -10,7 +10,7 @@ class ColorProfile {
     error: Color(0xFFB00020),
     outline: Color(0xFFB26D6D),
     onPrimary: Color(0xFFFFFFFF),
-    onSecondary: Color(0xFFB9B9B9),
+    onSecondary: Color(0xFFD3D3D3),
     onSurface: Color(0xFF000000),
     onBackground: Color(0xFF000000),
     onError: Color(0xFFA25353),

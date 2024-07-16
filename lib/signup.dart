@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class Signup extends StatefulWidget {
   final String title;
@@ -42,7 +44,7 @@ class _SignupState extends State<Signup> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(
-                        top: 20.0, bottom: 6.0, left: 8.0, right: 8.0),
+                        top: 10.0, bottom: 6.0, left: 8.0, right: 8.0),
                     child: Text(
                       "Name",
                       style: TextStyle(
@@ -182,11 +184,23 @@ class _SignupState extends State<Signup> {
                       obscureText: true,
                       obscuringCharacter: "*",
                     ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8.0),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("*",style: TextStyle(color: Colors.redAccent),),
+                        Flexible(
+                          child: Text( style: TextStyle(fontSize: 13.0),
+                              "password must contain minimum 8 characters with numbers,a special character and one uppercase letter"),
+                        ),
+                      ],
+                    ),
                   )
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.all(50.0),
+                padding: const EdgeInsets.all(30.0),
                 child: Column(
                   children: [
                     FilledButton(

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:watch_queue/home.dart';
 import 'package:watch_queue/res/color_profile.dart';
+import 'package:watch_queue/res/items/item_wishlist.dart';
 import 'package:watch_queue/signup.dart';
+import 'package:watch_queue/view_post.dart';
 
 import 'login.dart';
 
@@ -26,7 +29,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorProfile.dark),
       themeMode: ThemeMode.system,
-      home: const Signup(title: 'WatchQueue'),
+      home: const Home(),
     );
   }
 }
