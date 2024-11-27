@@ -1,9 +1,7 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:watch_queue/firebase/auth_service.dart';
 import 'package:watch_queue/firebase/fire_store_service.dart';
@@ -27,7 +25,7 @@ class _SettingsState extends State<Settings> {
   bool isExporting = false;
   bool importStatus = false;
   bool isImporting = false;
-  bool isButtonEnabled = true; //sync button enable or disable
+  bool isButtonEnabled = false; //sync button enable or disable
   List imdbIdList = [];
   List typeList = [];
   List nameList = [];
@@ -35,6 +33,7 @@ class _SettingsState extends State<Settings> {
   List releaseList = []; //movie released date
   List imgList = [];
   List statusList = []; //is movie
+  String _syncBtnText = 'Sync';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,14 +166,17 @@ class _SettingsState extends State<Settings> {
                             TextButton(
                               onPressed: isButtonEnabled
                                   ? () {
-                                      syncManager(authService, true);
+                                      setState(() async {
+                                        syncManager(
+                                            authService, 'version_id01', true);
+                                      });
                                     }
                                   : null,
                               style: TextButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(4.0)),
                               ),
-                              child: const Text('Sync'),
+                              child: Text(_syncBtnText),
                             ),
                           ],
                         ),
@@ -200,39 +202,66 @@ class _SettingsState extends State<Settings> {
     return custom;
   }
 
-  Future<VersionModel> getVersion(DBHandler dbHandler) async {
-    return await dbHandler.getVersion('version_id01');
+  Future<VersionModel> getVersion(DBHandler dbHandler, String versionId) async {
+    return await dbHandler.getVersion(versionId);
   }
 
-  Future<bool> syncManager(AuthService authService, bool isSync) async {
+  Future<bool> syncManager(
+      AuthService authService, String versionId, bool isSync) async {
 //isSync use for should sync or not data with cloud. true=sync,false=not sync
     User? user = await authService.getSignedUser();
     String? email = user?.email;
 
     VersionModel localVersion =
-        await getVersion(dbHandler); //local db version code
-    DocumentSnapshot<Map<String, dynamic>> docs =
-        await firestoreService.getDocuments2('todos', email!);
+        await getVersion(dbHandler, versionId); //local db version code
+    DocumentSnapshot<Map<String, dynamic>> docs = await firestoreService
+        .getDocuments2('todos', email!); //cloud db version code
 
     Map<String, dynamic>? data = docs.data();
     int cloudVersion = 1;
     if (data != null) {
-      cloudVersion = data['version_id01']; //cloud db version code
+      cloudVersion = data[versionId]; //cloud db version code
     }
     if (localVersion.versionCode == cloudVersion) {
       //do not sync
+      setState(() {
+        _syncBtnText = 'Synced';
+        isButtonEnabled = false;
+      });
+
       return false; //to notify button to disable.
     } else if (localVersion.versionCode > cloudVersion) {
-      isSync ? export(user) : null;
+      // export(user, versionId, localVersion.versionCode)
+      if (mounted) {
+        isSync
+            ? showPopupDialog(
+                context,
+                export,
+                user,
+                versionId,
+                localVersion.versionCode,
+                'You have to export Wishlist to cloud. This process cannot be reversed. Do the sync process?')
+            : null;
+      }
       return true;
     } else {
-      isSync ? import(user) : null;
+      if (mounted) {
+        isSync
+            ? showPopupDialog(context, import, user, versionId, cloudVersion,
+                'You have to import data from cloud to your Wishlist. This process cannot be reversed. Do the sync process?')
+            : null;
+      }
       return true;
     }
   }
 
-  Future<void> import(User? user) async {
+  Future<void> import(
+      User? user, String versionId, int cloudDbVersionCode) async {
     if (user != null) {
+      setState(() {
+        _syncBtnText = 'Syncing..';
+        isButtonEnabled = false;
+      });
       String? email = user.email;
 
       List<dynamic>? todos = await getTodos(dbHandler);
@@ -250,25 +279,48 @@ class _SettingsState extends State<Settings> {
       } else {
         List<Map<String, dynamic>> moviesFromCloud =
             await firestoreService.getDocuments('todos', email!, 'movies');
+
         for (var movie in moviesFromCloud) {
-          dbHandler.insertTodo(TodosModel(
-              id: movie['id'],
-              type: movie['type'],
-              name: movie['name'],
-              img: movie['img'],
-              releaseDate: movie['releaseDate'],
-              listedDate: movie['listedDate'],
-              watchStatus: toInt(movie['watchStatus'])));
-         // print("___done");
+          if (await dbHandler.isAvailableAll()) {
+            if (await dbHandler.isAvailable(movie['id'])) {
+              dbHandler.updateTodo(TodosModel(
+                  id: movie['id'],
+                  type: movie['type'],
+                  name: movie['name'],
+                  img: movie['img'],
+                  releaseDate: movie['releaseDate'],
+                  listedDate: movie['listedDate'],
+                  watchStatus: toInt(movie['watchStatus'])));
+            }
+          } else {
+            dbHandler.insertTodo(TodosModel(
+                id: movie['id'],
+                type: movie['type'],
+                name: movie['name'],
+                img: movie['img'],
+                releaseDate: movie['releaseDate'],
+                listedDate: movie['listedDate'],
+                watchStatus: toInt(movie['watchStatus'])));
+          }
         }
+        dbHandler.updateVersion(//update local db version code
+            VersionModel(id: versionId, versionCode: cloudDbVersionCode)).whenComplete((){setState(() {
+          _syncBtnText = 'Synced';
+          isButtonEnabled = false;
+            });});
       }
     } else {
       showToast('you should login 1st to sync data with cloud');
     }
   }
 
-  Future<void> export(User? user) async {
+  Future<void> export(
+      User? user, String versionId, int localDbVersionCode) async {
     if (user != null) {
+      setState(() {
+        _syncBtnText = 'Syncing..';
+        isButtonEnabled = false;
+      });
       String? email = user.email;
       List<dynamic>? todos = await getTodos(dbHandler);
 
@@ -284,8 +336,14 @@ class _SettingsState extends State<Settings> {
         }
         await firestoreService.deleteCollection('todos', email!, 'movies');
 
-        await firestoreService.dataSync(email, imdbIdList, typeList, nameList,
+        await firestoreService.setMovies(email, imdbIdList, typeList, nameList,
             dateList, releaseList, imgList, statusList);
+        await firestoreService.setVersion(email, versionId,
+            localDbVersionCode).whenComplete((){setState(() {
+          _syncBtnText = 'Synced';
+          isButtonEnabled = false;
+            });
+              }); //update cloud db version code
       } else {
         //do something when data not found in database
         //toast message to show no data to export.
@@ -316,7 +374,7 @@ class _SettingsState extends State<Settings> {
   void initState() {
     super.initState();
     _updateHour();
-    updateButtonState();
+    updateButtonState('version_id01');
   }
 
   void _updateHour() {
@@ -344,6 +402,7 @@ class _SettingsState extends State<Settings> {
       return 'Good night';
     }
   }
+
   void showToast(String msg) {
     final snackBar = SnackBar(
       content: Text(msg),
@@ -351,11 +410,70 @@ class _SettingsState extends State<Settings> {
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
-  Future<void> updateButtonState() async {
-    bool result = await syncManager(authService, false);
+
+  Future<void> updateButtonState(String versionId) async {
+    bool result = await syncManager(authService, versionId, false);
     setState(() {
       isButtonEnabled = result;
+      isButtonEnabled ? _syncBtnText = 'Sync' : _syncBtnText = 'Synced';
     });
   }
 
+  void showPopupDialog(
+      BuildContext context,
+      void Function(User?, String, int) callBack,
+      User? user,
+      String versionId,
+      int versionCode,
+      String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          title: Text(
+            'Warning',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 18.0),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+          actions: <Widget>[
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    callBack(user, versionId, versionCode);
+                  },
+                  child: const Text(
+                    'Okay, Sync Now',
+                    style: TextStyle(fontWeight: FontWeight.normal),
+                  )),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4.0))),
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ]),
+          ],
+        );
+      },
+    );
+  }
 }
+
+// Navigator.of(context).pop();
+// Navigator.push(
+// context,
+// MaterialPageRoute(
+// builder: (context) => ViewPost(
+// movieId: widget.id,
+// )),
+// );

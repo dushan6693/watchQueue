@@ -11,7 +11,7 @@ class FireStoreService {
     await _fireStore.collection('todos').doc(email).set({'version_id01': 1});
   }
 
-  Future<void> dataSync(
+  Future<void> setMovies(
     String email,
     List imdbIdList,
     List typeList,
@@ -31,8 +31,14 @@ class FireStoreService {
         'listedDate': dateList[i],
         'watchStatus': statusList[i],
       });
-
     }
+  }
+  Future<void> setVersion(String email, String versionId,int versionCode) async {
+      await _fireStore.collection('todos').doc(email).set({
+        versionId: versionCode,
+      });
+
+
 
 
   }
