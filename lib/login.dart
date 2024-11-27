@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:watch_queue/firebase/auth_service.dart';
 import 'package:watch_queue/signup.dart';
 
 class Login extends StatefulWidget {
-  final String title;
-  const Login({super.key, required this.title});
+  const Login({super.key});
 
   @override
   State<Login> createState() => _LoginState();
 }
 
 class _LoginState extends State<Login> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   _LoginState();
   @override
   Widget build(BuildContext context) {
+    AuthService authService = AuthService();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
-        centerTitle: true,
-        elevation: 5.0,
-        shadowColor: Colors.black12,
       ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.only(
-              top: 40.0, bottom: 8.0, left: 8.0, right: 8.0),
+              bottom: 8.0, left: 8.0, right: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -32,7 +32,7 @@ class _LoginState extends State<Login> {
                   Text(
                     "Login",
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onBackground,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 36.0,
                         fontWeight: FontWeight.normal),
                   )
@@ -47,19 +47,21 @@ class _LoginState extends State<Login> {
                     child: Text(
                       "Email",
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.onBackground,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 18.0),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
+                      controller: _emailController,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface,),
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
                                 color:
-                                    Theme.of(context).colorScheme.onSecondary,
+                                    Theme.of(context).colorScheme.outlineVariant,
                                 width: 2.0,
                                 style: BorderStyle.solid)),
                         focusedBorder: OutlineInputBorder(
@@ -83,19 +85,21 @@ class _LoginState extends State<Login> {
                     child: Text(
                       "Password",
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.onBackground,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 18.0),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
+                      controller: _passwordController,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface,),
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
                                 color:
-                                    Theme.of(context).colorScheme.onSecondary,
+                                    Theme.of(context).colorScheme.outlineVariant,
                                 width: 2.0,
                                 style: BorderStyle.solid)),
                         focusedBorder: OutlineInputBorder(
@@ -117,8 +121,12 @@ class _LoginState extends State<Login> {
                 child: Column(
                   children: [
                     FilledButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
+                      },
                       style: FilledButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
                         textStyle: const TextStyle(fontSize: 18.0),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0)),
@@ -133,17 +141,19 @@ class _LoginState extends State<Login> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                   Text(
                     "Don’t have an account? ",
-                    style: TextStyle(fontSize: 15.0),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 15.0),
                   ),
                   InkWell(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>const Signup(title: 'WatchQueue')));
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=>const Signup()));
                       },
-                      child: const Text(
+                      child: Text(
                         "Sign Up",
                         style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 15.0, fontWeight: FontWeight.w800),
                       ))
                 ],
