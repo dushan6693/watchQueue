@@ -8,6 +8,7 @@ class ItemSearch extends StatelessWidget {
   final String year;
   final String rating; //movie released date
   final String img;
+  final String type;
 
   const ItemSearch({
     super.key,
@@ -16,12 +17,12 @@ class ItemSearch extends StatelessWidget {
     required this.year,
     required this.rating,
     required this.img,
+    required this.type,
   });
   @override
   Widget build(BuildContext context) {
-    DBHandler dbHandler = DBHandler();
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -32,23 +33,28 @@ class ItemSearch extends StatelessWidget {
       },
       child: Card(
           elevation: 2.0,
-          color: Theme.of(context).colorScheme.onSecondary,
+          color: Theme.of(context).colorScheme.surfaceContainer,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: BorderRadius.circular(4.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8.0),
-                    topRight: Radius.circular(8.0)),
+                    topLeft: Radius.circular(4.0),
+                    topRight: Radius.circular(4.0)),
                 child: AspectRatio(
-                  aspectRatio: 100.0 / 150.0,
+                  aspectRatio: 100.0 / 160.0,
                   child: Container(
                     decoration: BoxDecoration(
                         image: DecorationImage(
-                            fit: BoxFit.cover, image: NetworkImage(img))),
+                            filterQuality: FilterQuality.medium,
+                            onError: (exception, stackTrace) => Image.asset(
+                                  'lib/assets/images/hotlink.jpeg',
+                                ),
+                            fit: BoxFit.cover,
+                            image: NetworkImage(img))),
                   ),
                 ),
               ),
@@ -57,9 +63,11 @@ class ItemSearch extends StatelessWidget {
                     left: 8.0, right: 8.0, top: 2.0, bottom: 2.0),
                 child: Text(
                   name,
-                  style: const TextStyle(
-                      fontSize: 18.0, fontWeight: FontWeight.bold),
-                  maxLines: 2,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -69,8 +77,27 @@ class ItemSearch extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(year),
-                    Text(rating),
+                    Row(
+                      children: [
+                        Text(year, style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            ),),
+                        Card(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4.0)),
+                            color: type == 'movie'
+                                ? Colors.green.shade700
+                                : Colors.red.shade400,
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 4.0, right: 4.0),
+                              child: Text(type,style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
+                            )),
+                      ],
+                    ),
+                    Text(rating, style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        ),),
                   ],
                 ),
               ),

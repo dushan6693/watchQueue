@@ -18,6 +18,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // backgroundColor: Theme.of(context).colorScheme.surface,
       // appBar: AppBar(
       //   title: Text(label[_selectedIndex]),
       //   centerTitle: true,

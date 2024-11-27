@@ -1,14 +1,19 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:watch_queue/home.dart';
+import 'package:watch_queue/login.dart';
 import 'package:watch_queue/res/color_profile.dart';
-import 'package:watch_queue/res/items/item_wishlist.dart';
 import 'package:watch_queue/signup.dart';
-import 'package:watch_queue/view_post.dart';
 
-import 'login.dart';
-
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
+          apiKey: 'AIzaSyDNvlaVlDkvQPPJ0LQVFt4dlOwEgrekclE',
+          appId: '1:128945381792:android:a3dcd06e36d4262e6704c5',
+          messagingSenderId: '128945381792',
+          projectId: 'watch-queue-54c93'));
   runApp(const MyApp());
 }
 

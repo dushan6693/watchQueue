@@ -1,13 +1,15 @@
-class DbModel {
+class TodosModel {
   String? id;
+  String type;
   String name;
   String img;
   String releaseDate;
   String listedDate;
   int watchStatus;
 
-  DbModel({
+  TodosModel({
     required this.id,
+    required this.type,
     required this.name,
     required this.img,
     required this.releaseDate,
@@ -17,6 +19,7 @@ class DbModel {
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
+      'type': type,
       'name': name,
       'img': img,
       'release_date': releaseDate,
@@ -29,10 +32,10 @@ class DbModel {
     return map;
   }
 
-
-  factory DbModel.fromMap(Map<String, dynamic> map) {
-    return DbModel(
+  factory TodosModel.fromMap(Map<String, dynamic> map) {
+    return TodosModel(
       id: map['id'],
+      type: map['type'],
       name: map['name'],
       img: map['img'],
       releaseDate: map['release_date'],

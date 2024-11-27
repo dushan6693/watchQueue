@@ -16,6 +16,7 @@ class _SearchState extends State<Search> {
   final List _yearList = [];
   final List _ratingList = [];
   final List _imgList = [];
+  final List _typeList = [];
   final String _apiKey = '84a39093';
   final _searchController = TextEditingController();
 
@@ -34,6 +35,7 @@ class _SearchState extends State<Search> {
                 child: TextField(
                   controller: _searchController,
                   maxLines: 1,
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: const InputDecoration(
                     hintText: 'Search here',
                     border: InputBorder.none,
@@ -41,7 +43,7 @@ class _SearchState extends State<Search> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.search),
+                icon: Icon(Icons.search,color: Theme.of(context).colorScheme.onSurface,),
                 onPressed: () {
                   setState(() {
                     requestData(_searchController.text,true);
@@ -57,7 +59,7 @@ class _SearchState extends State<Search> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
-              return const Center(child: Text('Nothing here to show',style: TextStyle(fontSize: 18.0,fontWeight: FontWeight.w100),));
+              return Center(child: Text('Search something to show...',style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),fontSize: 18.0,fontWeight: FontWeight.w100),));
             } else {
               List<Movies>? movies = snapshot.data;
               for (var movie in movies!) {
@@ -66,6 +68,7 @@ class _SearchState extends State<Search> {
                 _yearList.add(movie.year);
                 _imgList.add(movie.poster);
                 _ratingList.add(movie.imdbRating);
+                _typeList.add(movie.type);
               }
               return Column(
                 children: [
@@ -88,6 +91,7 @@ class _SearchState extends State<Search> {
                             id: _idList[index],
                             rating: _ratingList[index],
                             year: _yearList[index],
+                            type: _typeList[index],
                           )
                       ],
                     ),
@@ -114,6 +118,7 @@ class _SearchState extends State<Search> {
     _yearList.clear();
     _imgList.clear();
     _ratingList.clear();
+    _typeList.clear();
 
     if (request != '') {
       SharedPrefs().saveString('search_data', request);

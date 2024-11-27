@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "128945381792",
+    "project_id": "watch-queue-54c93",
+    "storage_bucket": "watch-queue-54c93.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:128945381792:android:a3dcd06e36d4262e6704c5",
+        "android_client_info": {
+          "package_name": "com.dushandev.watch_queue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNvlaVlDkvQPPJ0LQVFt4dlOwEgrekclE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

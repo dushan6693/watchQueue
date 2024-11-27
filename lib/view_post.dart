@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:watch_queue/models/Movie.dart';
 import 'package:watch_queue/read_date.dart';
 import 'package:watch_queue/res/database/dbhandler.dart';
-import 'package:watch_queue/res/database/dbmodel.dart';
+import 'package:watch_queue/res/database/todos_model.dart';
+import 'package:watch_queue/res/database/version_model.dart';
 
 class ViewPost extends StatefulWidget {
   final String movieId;
@@ -16,7 +16,7 @@ class ViewPost extends StatefulWidget {
   State<ViewPost> createState() => _ViewPostState();
 }
 
-class _ViewPostState extends State<ViewPost>{
+class _ViewPostState extends State<ViewPost> {
   bool isAdded = false;
   ReadDate readDate = ReadDate();
   DBHandler dbHandler = DBHandler();
@@ -34,11 +34,10 @@ class _ViewPostState extends State<ViewPost>{
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            print(snapshot.error);
-            return const Center(
+            return Center(
                 child: Text(
-              'Movie details not found',
-              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w100),
+              'Details not found',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3) ,fontSize: 18.0, fontWeight: FontWeight.w100,),
             ));
           } else {
             Movie? movie = snapshot.data![0];
@@ -52,281 +51,317 @@ class _ViewPostState extends State<ViewPost>{
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 170.0,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8.0),
-                                child: AspectRatio(
-                                  aspectRatio: 100.0 / 170.0,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                            fit: BoxFit.cover,
-                                            image:
-                                                NetworkImage(movie!.poster))),
+                        Card(
+                          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 170.0,
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(4.0),bottomLeft: Radius.circular(4.0)),
+                                  child: AspectRatio(
+                                    aspectRatio: 100.0 / 170.0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          image: DecorationImage(
+                                              fit: BoxFit.cover,
+                                              image:
+                                                  NetworkImage(movie!.poster))),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Table(
-                                  columnWidths: const {
-                                    0: FixedColumnWidth(100.0),
-                                    1: FlexColumnWidth(1.0),
-                                  },
-                                  children: [
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(1.0),
-                                        child: Text(
-                                          'Type :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(1.0),
-                                        child: Card(
-                                          margin: EdgeInsets.zero,
-                                          color: movie.type=='movie'?Colors.green.shade100: Colors.red.shade100,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Table(
+                                    columnWidths: const {
+                                      0: FixedColumnWidth(100.0),
+                                      1: FlexColumnWidth(1.0),
+                                    },
+                                    children: [
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(1.0),
                                           child: Text(
-                                            movie.type,
-                                            style: const TextStyle(
+                                            'Type :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Card(
+                                            margin: EdgeInsets.zero,
+                                            color: movie.type == 'movie'
+                                                ? Colors.green.shade700
+                                                : Colors.red.shade400,
+                                            shape: const RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.only(topRight: Radius.circular(4.0))),
+                                            child: Center(
+                                              child: Text(
+                                                movie.type,
+                                                style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.onPrimary,
+                                                    fontSize: 15.0,
+                                                    fontWeight: FontWeight.normal),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            'Year :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            movie.year,
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.normal),
                                           ),
                                         ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(1.0),
-                                        child: Text(
-                                          'Year :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            'Released :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(1.0),
-                                        child: Text(
-                                          movie.year,
-                                          style: const TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.normal),
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            movie.released,
+                                            style:  TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.normal),
+                                          ),
                                         ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(1.0),
-                                        child: Text(
-                                          'Released :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            'Rated :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(1.0),
-                                        child: Text(
-                                          movie.released,
-                                          style: const TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.normal),
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            movie.rated,
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.normal),
+                                          ),
                                         ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(1.0),
-                                        child: Text(
-                                          'Rated :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            'Runtime :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(1.0),
-                                        child: Text(
-                                          movie.rated,
-                                          style: const TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.normal),
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            movie.runtime,
+                                            style:  TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.normal),
+                                          ),
                                         ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(1.0),
-                                        child: Text(
-                                          'Runtime :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            'Languages :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(1.0),
-                                        child: Text(
-                                          movie.runtime,
-                                          style: const TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.normal),
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            movie.language,
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.normal),
+                                            maxLines: 4,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(1.0),
-                                        child: Text(
-                                          'Languages :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(2.0),
+                                          child: Text(
+                                            'Votes :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(1.0),
-                                        child: Text(
-                                          movie.language,
-                                          style: const TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.normal),
-                                          maxLines: 4,
-                                          overflow: TextOverflow.ellipsis,
+                                        Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Text(
+                                            movie.imdbVotes,
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.normal),
+                                          ),
                                         ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(2.0),
-                                        child: Text(
-                                          'Votes :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Text(
+                                            'IMDB :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(4.0),
-                                        child: Text(
-                                          movie.imdbVotes,
-                                          style: const TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.normal),
-                                        ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(1.0),
-                                        child: Text(
-                                          'IMDB :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(1.0),
-                                        child: Row(
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
-                                              child: Image.asset(
-                                                'lib/assets/images/imdb.png',
-                                                width: 20.0,
-                                                fit: BoxFit.fitWidth,
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Row(
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 8.0),
+                                                child: Image.asset(
+                                                  'lib/assets/images/imdb.png',
+                                                  width: 20.0,
+                                                  fit: BoxFit.fitWidth,
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              movie.imdbRating,
-                                              style: const TextStyle(
-                                                  fontSize: 15.0,
-                                                  fontWeight:
-                                                  FontWeight.normal),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ]),
-                                    TableRow(children: [
-                                      const Padding(
-                                        padding: EdgeInsets.all(2.0),
-                                        child: Text(
-                                          'Rotten :',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(4.0),
-                                        child: Row(
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
-                                              child: Image.asset(
-                                                'lib/assets/images/rotten_tomatoes.png',
-                                                width: 20.0,
-                                                fit: BoxFit.fitWidth,
+                                              Text(
+                                                movie.imdbRating,
+                                                style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.onSurface,
+                                                    fontSize: 15.0,
+                                                    fontWeight:
+                                                        FontWeight.normal),
                                               ),
-                                            ),
-                                            Text(
-                                              movie.ratings.length > 1
-                                                  ? movie.ratings[1].value
-                                                  : 'N/A',
-                                              style: const TextStyle(
-                                                  fontSize: 15.0,
-                                                  fontWeight:
-                                                      FontWeight.normal),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ]),
-                                  ],
+                                      ]),
+                                      TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(2.0),
+                                          child: Text(
+                                            'Rotten :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Row(
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 8.0),
+                                                child: Image.asset(
+                                                  'lib/assets/images/rotten_tomatoes.png',
+                                                  width: 20.0,
+                                                  fit: BoxFit.fitWidth,
+                                                ),
+                                              ),
+                                              Text(
+                                                movie.ratings.length > 1
+                                                    ? movie.ratings[1].value
+                                                    : 'N/A',
+                                                style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.onSurface,
+                                                    fontSize: 15.0,
+                                                    fontWeight:
+                                                        FontWeight.normal),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ]),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            )
-                          ],
+                              )
+                            ],
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                          child: ColoredBox(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                          child: Card(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHigh
+                                ,
                             child: Row(
                               children: [
                                 Flexible(
-                                  child: Text(
-                                    movie.title,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 10.0),
+                                    child: Text(
+                                      movie.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                          fontSize: 20.0,
+                                          fontWeight: FontWeight.bold),
+                                    ),
                                   ),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 12.0),
                                   child: IconButton(
                                       onPressed: () {},
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.copy,
-                                        color: Colors.grey,
+                                        color: Theme.of(context).colorScheme.primary,
                                       )),
                                 )
                               ],
@@ -342,11 +377,12 @@ class _ViewPostState extends State<ViewPost>{
                               },
                               children: [
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
+                                   Padding(
+                                    padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Genre :',
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -355,18 +391,20 @@ class _ViewPostState extends State<ViewPost>{
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.genre,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
+                                   Padding(
+                                    padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Director :',
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -375,18 +413,20 @@ class _ViewPostState extends State<ViewPost>{
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.director,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
+                                   Padding(
+                                    padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Writer :',
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -395,39 +435,45 @@ class _ViewPostState extends State<ViewPost>{
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.writer,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
-                                movie.totalSeasons=='-'?TableRow(children: [Container(),Container()]):
+                                movie.totalSeasons == '-'
+                                    ? TableRow(
+                                        children: [Container(), Container()])
+                                    : TableRow(children: [
+                                         Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Text(
+                                            'Seasons :',
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15.0),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Text(
+                                            movie.totalSeasons,
+                                            style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                                fontWeight: FontWeight.normal,
+                                                fontSize: 15.0),
+                                          ),
+                                        ),
+                                      ]),
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
-                                    child: Text(
-                                      'Seasons :',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15.0),
-                                    ),
-                                  ),
-                                  Padding(
+                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
-                                    child: Text(
-                                      movie.totalSeasons,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.normal,
-                                          fontSize: 15.0),
-                                    ),
-                                  ),
-                                ]),
-                                TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
                                     child: Text(
                                       'Country :',
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -436,18 +482,20 @@ class _ViewPostState extends State<ViewPost>{
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.country,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
+                                   Padding(
+                                    padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'BoxOffice :',
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -456,18 +504,20 @@ class _ViewPostState extends State<ViewPost>{
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.boxOffice,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
+                                   Padding(
+                                    padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Production :',
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -476,18 +526,20 @@ class _ViewPostState extends State<ViewPost>{
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.production,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
+                                   Padding(
+                                    padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Awards :',
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -496,20 +548,22 @@ class _ViewPostState extends State<ViewPost>{
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.awards,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(4.0),
+                                   Padding(
+                                    padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Plot :',
                                       maxLines: 20,
                                       overflow: TextOverflow.fade,
                                       style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -520,7 +574,8 @@ class _ViewPostState extends State<ViewPost>{
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 25,
                                       movie.plot,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontStyle: FontStyle.italic,
                                           fontSize: 15.0),
@@ -546,45 +601,54 @@ class _ViewPostState extends State<ViewPost>{
                       child: Row(
                         children: [
                           Expanded(
-                            child: ElevatedButton(
-                              onPressed: isAdded
-                                  ? null
-                                  : () async {
-                                      DBHandler dbHandler = DBHandler();
-                                      setState(() {
-                                        dbHandler.insert(DbModel(
-                                            id: movie.imdbId,
-                                            name: movie.title,
-                                            img: movie.poster,
-                                            releaseDate: movie.released,
-                                            listedDate: readDate.getDateNow(),
-                                            watchStatus: 0));
-                                        isAdded = true;
-                                        showToast('Added to wishlist');
-                                      });
-                                    },
-                              style: FilledButton.styleFrom(
-                                backgroundColor: isAdded
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withOpacity(0.9)
-                                    : Theme.of(context).colorScheme.primary,
-                                foregroundColor:
-                                    Theme.of(context).colorScheme.onPrimary,
-                                shadowColor: Colors.black,
-                                textStyle: const TextStyle(fontSize: 18.0),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0)),
-                                padding: const EdgeInsets.only(
-                                    left: 50.0,
-                                    right: 50.0,
-                                    top: 15.0,
-                                    bottom: 15.0),
+                            child: Container(
+                              color: Theme.of(context).colorScheme.surface,
+                              child: ElevatedButton(
+                                onPressed: isAdded
+                                    ? null
+                                    : () async {
+                                        DBHandler dbHandler = DBHandler();
+                                        setState(() {
+                                          dbHandler.insertTodo(TodosModel(
+                                              id: movie.imdbId,
+                                              type: movie.type,
+                                              name: movie.title,
+                                              img: movie.poster,
+                                              releaseDate: movie.released,
+                                              listedDate: readDate.getDateNow(),
+                                              watchStatus: 0));
+
+                                         // dbHandler.incrementVersion('version_id01');//increment version_code on Version table by 1. to update the database status.
+
+                                          isAdded = true;
+                                          showToast(
+                                              '${movie.type} Added to wishlist',
+                                              movie.imdbId);
+                                        });
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isAdded
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.9)
+                                      : Theme.of(context).colorScheme.primary,
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  shadowColor: Colors.black,
+                                  textStyle: const TextStyle(fontSize: 18.0),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0)),
+                                  padding: const EdgeInsets.only(
+                                      left: 50.0,
+                                      right: 50.0,
+                                      top: 15.0,
+                                      bottom: 15.0),
+                                ),
+                                child: isAdded
+                                    ? const Text('Added')
+                                    : const Text("Add To Wishlist"),
                               ),
-                              child: isAdded
-                                  ? const Text('Added')
-                                  : const Text("add to wishlist"),
                             ),
                           ),
                         ],
@@ -628,15 +692,22 @@ class _ViewPostState extends State<ViewPost>{
     bool status = await dbHandler.isAvailable(imdbId);
     return status;
   }
-void showToast(String msg){
-  Fluttertoast.showToast(
-      msg: msg,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.red,
-      textColor: Colors.white,
-      fontSize: 16.0
-  );
-}
 
+  void showToast(String msg, String id) {
+    final snackBar = SnackBar(
+      content: Text(msg),
+      duration: const Duration(seconds: 2),
+      action: SnackBarAction(
+        label: 'Undo',
+        textColor: Theme.of(context).colorScheme.surface,
+        onPressed: () {
+          setState(() {
+            dbHandler.deleteTodo(id);
+            isAdded = false;
+          });
+        },
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
 }
