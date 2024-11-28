@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../view_post.dart';
-import '../database/dbhandler.dart';
 
 class ItemSearch extends StatelessWidget {
   final String name;

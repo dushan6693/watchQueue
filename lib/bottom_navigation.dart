@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class BottomNavigation extends StatelessWidget {
@@ -18,8 +17,8 @@ class BottomNavigation extends StatelessWidget {
         onTap: onItemSelected,
         type: BottomNavigationBarType.fixed,
         items: [
-      BottomNavigationBarItem(icon: Icon(Icons.task_alt), label: labels[0]),
-      BottomNavigationBarItem(icon: Icon(Icons.search), label: labels[1])
+      BottomNavigationBarItem(icon: const Icon(Icons.task_alt), label: labels[0]),
+      BottomNavigationBarItem(icon: const Icon(Icons.search), label: labels[1])
     ]);
   }
 }

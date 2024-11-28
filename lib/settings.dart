@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:watch_queue/firebase/auth_service.dart';
 import 'package:watch_queue/firebase/fire_store_service.dart';
+import 'package:watch_queue/login.dart';
 import 'package:watch_queue/res/database/dbhandler.dart';
 import 'package:watch_queue/res/database/todos_model.dart';
 import 'package:watch_queue/res/database/version_model.dart';
@@ -18,14 +19,14 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings> {
   int _time = 0;
-  FireStoreService firestoreService = FireStoreService();
+  FireStoreService fireStoreService = FireStoreService();
   AuthService authService = AuthService();
   DBHandler dbHandler = DBHandler();
   bool exportStatus = false;
   bool isExporting = false;
   bool importStatus = false;
   bool isImporting = false;
-  bool isButtonEnabled = false; //sync button enable or disable
+
   List imdbIdList = [];
   List typeList = [];
   List nameList = [];
@@ -33,7 +34,12 @@ class _SettingsState extends State<Settings> {
   List releaseList = []; //movie released date
   List imgList = [];
   List statusList = []; //is movie
+  bool _isButtonEnabled = false; //sync button enable or disable
   String _syncBtnText = 'Sync';
+  bool _isUserLogged = false; // save user login status
+  String _displayName = 'User';
+  String _displayPicture = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,12 +71,13 @@ class _SettingsState extends State<Settings> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(right: 8.0),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
                       child: CircleAvatar(
                           radius: 45,
                           backgroundImage: NetworkImage(
-                              'https://img.freepik.com/free-photo/smiley-african-woman-wearing-traditional-accessories_23-2148747966.jpg?t=st=1720456091~exp=1720459691~hmac=2b5f7672d242541838504bf687b7568b097acf520add92dd9ad26c6b44467295&w=740')),
+                            _displayPicture,
+                          )),
                     ),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -80,7 +87,7 @@ class _SettingsState extends State<Settings> {
                           padding:
                               const EdgeInsets.only(left: 8.0, bottom: 8.0),
                           child: Text(
-                            '${quoteState(_time)} Liyora!',
+                            '${quoteState(_time)} $_displayName!',
                             style: TextStyle(
                               fontSize: 18.0,
                               fontWeight: FontWeight.w600,
@@ -92,9 +99,23 @@ class _SettingsState extends State<Settings> {
                           padding:
                               const EdgeInsets.only(left: 8.0, bottom: 8.0),
                           child: OutlinedButton(
-                            onPressed: () async {
-                              authService.signOut();
-                            },
+                            onPressed: _isUserLogged
+                                ? () async {
+                                    setState(() {
+                                      authService.signOut();
+                                      _isUserLogged = false;
+                                      _isButtonEnabled = false;
+                                      _syncBtnText = 'Sync';
+                                    });
+                                  }
+                                : () {
+                                    Navigator.of(context).pop();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => const Login()),
+                                    );
+                                  },
                             style: OutlinedButton.styleFrom(
                               textStyle: const TextStyle(fontSize: 12.0),
                               shape: RoundedRectangleBorder(
@@ -105,7 +126,7 @@ class _SettingsState extends State<Settings> {
                               ),
                             ),
                             child: Text(
-                              "Log Out",
+                              _isUserLogged ? 'Log Out' : 'Log In',
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
@@ -151,7 +172,7 @@ class _SettingsState extends State<Settings> {
                                   child: Text(
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    'You can prevent data loss by syncing watchlist with cloud',
+                                    'You can prevent data loss when reinstall the app by syncing watchlist with cloud.',
                                     style: TextStyle(
                                       color: Theme.of(context)
                                           .colorScheme
@@ -164,7 +185,7 @@ class _SettingsState extends State<Settings> {
                               ],
                             ),
                             TextButton(
-                              onPressed: isButtonEnabled
+                              onPressed: _isButtonEnabled
                                   ? () {
                                       setState(() async {
                                         syncManager(
@@ -210,48 +231,68 @@ class _SettingsState extends State<Settings> {
       AuthService authService, String versionId, bool isSync) async {
 //isSync use for should sync or not data with cloud. true=sync,false=not sync
     User? user = await authService.getSignedUser();
-    String? email = user?.email;
-
-    VersionModel localVersion =
-        await getVersion(dbHandler, versionId); //local db version code
-    DocumentSnapshot<Map<String, dynamic>> docs = await firestoreService
-        .getDocuments2('todos', email!); //cloud db version code
-
-    Map<String, dynamic>? data = docs.data();
-    int cloudVersion = 1;
-    if (data != null) {
-      cloudVersion = data[versionId]; //cloud db version code
-    }
-    if (localVersion.versionCode == cloudVersion) {
-      //do not sync
+    if (user != null) {
+      String? email = user.email;
+      DocumentSnapshot<Map<String, dynamic>> userDetails =
+          await fireStoreService.getDocuments2('users', email!);
+      Map<String, dynamic>? det = userDetails.data();
+      _displayName = det?['dn'];
+      _displayPicture = det?['dp'];
       setState(() {
-        _syncBtnText = 'Synced';
-        isButtonEnabled = false;
+        _isUserLogged = true;
+        _syncBtnText = 'Sync';
+        _isButtonEnabled = true;
       });
 
-      return false; //to notify button to disable.
-    } else if (localVersion.versionCode > cloudVersion) {
-      // export(user, versionId, localVersion.versionCode)
-      if (mounted) {
-        isSync
-            ? showPopupDialog(
-                context,
-                export,
-                user,
-                versionId,
-                localVersion.versionCode,
-                'You have to export Wishlist to cloud. This process cannot be reversed. Do the sync process?')
-            : null;
+      VersionModel localVersion =
+          await getVersion(dbHandler, versionId); //local db version code
+      DocumentSnapshot<Map<String, dynamic>> docs = await fireStoreService
+          .getDocuments2('todos', email); //cloud db version code
+
+      Map<String, dynamic>? data = docs.data();
+      int cloudVersion = 1;
+      if (data != null) {
+        cloudVersion = data[versionId]; //cloud db version code
       }
-      return true;
+      if (localVersion.versionCode == cloudVersion) {
+        //do not sync
+        setState(() {
+          _syncBtnText = 'Synced';
+          _isButtonEnabled = false;
+        });
+
+        return false; //to notify button to disable.
+      } else if (localVersion.versionCode > cloudVersion) {
+        // export(user, versionId, localVersion.versionCode)
+        if (mounted) {
+          isSync
+              ? showPopupDialog(
+                  context,
+                  export,
+                  user,
+                  versionId,
+                  localVersion.versionCode,
+                  'You have to export Wishlist to cloud. This process cannot be reversed. Do the sync process?')
+              : null;
+        }
+        return true;
+      } else {
+        if (mounted) {
+          isSync
+              ? showPopupDialog(context, import, user, versionId, cloudVersion,
+                  'You have to import data from cloud to your Wishlist. This process cannot be reversed. Do the sync process?')
+              : null;
+        }
+        return true;
+      }
     } else {
-      if (mounted) {
-        isSync
-            ? showPopupDialog(context, import, user, versionId, cloudVersion,
-                'You have to import data from cloud to your Wishlist. This process cannot be reversed. Do the sync process?')
-            : null;
-      }
-      return true;
+      setState(() {
+        _isUserLogged = false;
+        _syncBtnText = 'Sync';
+        _isButtonEnabled = false;
+      });
+      showToast('you should login to sync data with cloud');
+      return false;
     }
   }
 
@@ -260,7 +301,7 @@ class _SettingsState extends State<Settings> {
     if (user != null) {
       setState(() {
         _syncBtnText = 'Syncing..';
-        isButtonEnabled = false;
+        _isButtonEnabled = false;
       });
       String? email = user.email;
 
@@ -278,20 +319,18 @@ class _SettingsState extends State<Settings> {
         }
       } else {
         List<Map<String, dynamic>> moviesFromCloud =
-            await firestoreService.getDocuments('todos', email!, 'movies');
+            await fireStoreService.getDocuments('todos', email!, 'movies');
 
         for (var movie in moviesFromCloud) {
-          if (await dbHandler.isAvailableAll()) {
-            if (await dbHandler.isAvailable(movie['id'])) {
-              dbHandler.updateTodo(TodosModel(
-                  id: movie['id'],
-                  type: movie['type'],
-                  name: movie['name'],
-                  img: movie['img'],
-                  releaseDate: movie['releaseDate'],
-                  listedDate: movie['listedDate'],
-                  watchStatus: toInt(movie['watchStatus'])));
-            }
+          if (await dbHandler.isAvailable(movie['id'])) {
+            dbHandler.updateTodo(TodosModel(
+                id: movie['id'],
+                type: movie['type'],
+                name: movie['name'],
+                img: movie['img'],
+                releaseDate: movie['releaseDate'],
+                listedDate: movie['listedDate'],
+                watchStatus: toInt(movie['watchStatus'])));
           } else {
             dbHandler.insertTodo(TodosModel(
                 id: movie['id'],
@@ -303,13 +342,18 @@ class _SettingsState extends State<Settings> {
                 watchStatus: toInt(movie['watchStatus'])));
           }
         }
-        dbHandler.updateVersion(//update local db version code
-            VersionModel(id: versionId, versionCode: cloudDbVersionCode)).whenComplete((){setState(() {
-          _syncBtnText = 'Synced';
-          isButtonEnabled = false;
-            });});
+        dbHandler
+            .updateVersion(//update local db version code
+                VersionModel(id: versionId, versionCode: cloudDbVersionCode))
+            .whenComplete(() {
+          setState(() {
+            _syncBtnText = 'Synced';
+            _isButtonEnabled = false;
+          });
+        });
       }
     } else {
+      _isUserLogged = false;
       showToast('you should login 1st to sync data with cloud');
     }
   }
@@ -319,7 +363,7 @@ class _SettingsState extends State<Settings> {
     if (user != null) {
       setState(() {
         _syncBtnText = 'Syncing..';
-        isButtonEnabled = false;
+        _isButtonEnabled = false;
       });
       String? email = user.email;
       List<dynamic>? todos = await getTodos(dbHandler);
@@ -334,23 +378,34 @@ class _SettingsState extends State<Settings> {
           imgList.add(todo.img);
           statusList.add(fromInt(todo.watchStatus));
         }
-        await firestoreService.deleteCollection('todos', email!, 'movies');
+        await fireStoreService.deleteCollection('todos', email!, 'movies');
 
-        await firestoreService.setMovies(email, imdbIdList, typeList, nameList,
+        await fireStoreService.setMovies(email, imdbIdList, typeList, nameList,
             dateList, releaseList, imgList, statusList);
-        await firestoreService.setVersion(email, versionId,
-            localDbVersionCode).whenComplete((){setState(() {
-          _syncBtnText = 'Synced';
-          isButtonEnabled = false;
-            });
-              }); //update cloud db version code
+        await fireStoreService
+            .setVersion(email, versionId, localDbVersionCode)
+            .whenComplete(() {
+          setState(() {
+            _syncBtnText = 'Synced';
+            _isButtonEnabled = false;
+          });
+        }); //update cloud db version code
       } else {
         //do something when data not found in database
         //toast message to show no data to export.
-        showToast('local data not found to export');
+        setState(() {
+          _syncBtnText = 'Sync';
+          _isButtonEnabled = true;
+        });
+        showToast('local data not found');
       }
     } else {
-      showToast('you should login 1st to sync data with cloud');
+      setState(() {
+        _syncBtnText = 'Sync';
+        _isButtonEnabled = false;
+        _isUserLogged = false;
+      });
+      showToast('you should login to sync data with cloud');
     }
   }
 
@@ -412,11 +467,7 @@ class _SettingsState extends State<Settings> {
   }
 
   Future<void> updateButtonState(String versionId) async {
-    bool result = await syncManager(authService, versionId, false);
-    setState(() {
-      isButtonEnabled = result;
-      isButtonEnabled ? _syncBtnText = 'Sync' : _syncBtnText = 'Synced';
-    });
+    await syncManager(authService, versionId, false);
   }
 
   void showPopupDialog(
@@ -468,12 +519,3 @@ class _SettingsState extends State<Settings> {
     );
   }
 }
-
-// Navigator.of(context).pop();
-// Navigator.push(
-// context,
-// MaterialPageRoute(
-// builder: (context) => ViewPost(
-// movieId: widget.id,
-// )),
-// );

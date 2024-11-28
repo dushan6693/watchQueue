@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:watch_queue/res/color_profile.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:watch_queue/res/database/dbhandler.dart';
 import 'package:watch_queue/res/database/todos_model.dart';
 import 'package:watch_queue/res/items/item_wishlist.dart';
@@ -47,7 +47,10 @@ class _WishlistState extends State<Wishlist> {
         future: getTodos(dbHandler, _searchController.text),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: SpinKitThreeBounce(
+              color: Theme.of(context).colorScheme.primary,
+              size: 25.0,
+            ),);
           } else if (snapshot.hasError) {
             return Center(
                 child: Text(

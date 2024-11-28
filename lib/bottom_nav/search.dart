@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:watch_queue/res/items/item_search.dart';
-import '../models/Movies.dart';
+import '../models/movies.dart';
 import '../res/database/shared_prefs.dart';
 
 class Search extends StatefulWidget {
@@ -57,7 +58,10 @@ class _SearchState extends State<Search> {
           future: requestData(_searchController.text,false),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(child: SpinKitThreeBounce(
+                color: Theme.of(context).colorScheme.primary,
+                size: 25.0,
+              ),);
             } else if (snapshot.hasError) {
               return Center(child: Text('Search something to show...',style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),fontSize: 18.0,fontWeight: FontWeight.w100),));
             } else {
