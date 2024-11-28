@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:watch_queue/models/Movie.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:watch_queue/models/movie.dart';
 import 'package:watch_queue/read_date.dart';
 import 'package:watch_queue/res/database/dbhandler.dart';
 import 'package:watch_queue/res/database/todos_model.dart';
-import 'package:watch_queue/res/database/version_model.dart';
 
 class ViewPost extends StatefulWidget {
   final String movieId;
@@ -32,7 +32,10 @@ class _ViewPostState extends State<ViewPost> {
         future: fetchDetailsWithStatus(_apiKey, widget.movieId, dbHandler),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return  Center(child:  SpinKitThreeBounce(
+              color: Theme.of(context).colorScheme.primary,
+              size: 25.0,
+            ),);
           } else if (snapshot.hasError) {
             return Center(
                 child: Text(

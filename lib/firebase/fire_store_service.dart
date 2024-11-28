@@ -1,17 +1,22 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:watch_queue/random.dart';
 
 class FireStoreService {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
-
+Random random = Random();
   Future<void> register(String email, String name) async {
+    List<String>words = random.splitName(name);
     await _fireStore.collection('users').doc(email).set({
       'name': name,
+      'dn': words[0],
       'email': email,
+      'dp': random.randomDp(name),
     });
     await _fireStore.collection('todos').doc(email).set({'version_id01': 1});
   }
 
-  Future<void> dataSync(
+  Future<void> setMovies(
     String email,
     List imdbIdList,
     List typeList,
@@ -31,8 +36,14 @@ class FireStoreService {
         'listedDate': dateList[i],
         'watchStatus': statusList[i],
       });
-
     }
+  }
+  Future<void> setVersion(String email, String versionId,int versionCode) async {
+      await _fireStore.collection('todos').doc(email).set({
+        versionId: versionCode,
+      });
+
+
 
 
   }
