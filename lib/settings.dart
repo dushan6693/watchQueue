@@ -33,7 +33,8 @@ class _SettingsState extends State<Settings> {
   String _syncBtnText = 'Sync';
   bool _isUserLogged = false; // save user login status
   String _displayName = 'User';
-  String _displayPicture = 'https://cdn.icon-icons.com/icons2/1812/PNG/512/4213460-account-avatar-head-person-profile-user_115386.png';
+  String _displayPicture =
+      'https://cdn.icon-icons.com/icons2/1812/PNG/512/4213460-account-avatar-head-person-profile-user_115386.png';
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +71,7 @@ class _SettingsState extends State<Settings> {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: CircleAvatar(
                           radius: 45,
-                          backgroundImage:
-                           NetworkImage(
+                          backgroundImage: NetworkImage(
                             _displayPicture,
                           )),
                     ),
@@ -96,13 +96,8 @@ class _SettingsState extends State<Settings> {
                               const EdgeInsets.only(left: 8.0, bottom: 8.0),
                           child: OutlinedButton(
                             onPressed: _isUserLogged
-                                ? () async {
-                                    setState(() {
-                                      _authService.signOut();
-                                      _isUserLogged = false;
-                                      _isButtonEnabled = false;
-                                      _syncBtnText = 'Sync';
-                                    });
+                                ? () {
+                                    showPopupLogout(context);
                                   }
                                 : () {
                                     Navigator.of(context).pop();
@@ -406,8 +401,8 @@ class _SettingsState extends State<Settings> {
         }
         await fireStoreService.deleteCollection('todos', email!, 'movies');
 
-        await fireStoreService.setMovies(email, _imdbIdList, _typeList, _nameList,
-            _dateList, _releaseList, _imgList, _statusList);
+        await fireStoreService.setMovies(email, _imdbIdList, _typeList,
+            _nameList, _dateList, _releaseList, _imgList, _statusList);
         await fireStoreService
             .setVersion(email, versionId, localDbVersionCode)
             .whenComplete(() {
@@ -490,6 +485,56 @@ class _SettingsState extends State<Settings> {
       duration: const Duration(seconds: 2),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void showPopupLogout(
+    BuildContext context,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          title: Text(
+            'Confirm Logout',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 18.0),
+          ),
+          content: Text(
+            'Are you sure you want to log out?',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+          actions: <Widget>[
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      Navigator.of(context).pop();
+                      _authService.signOut();
+                      _isUserLogged = false;
+                      _isButtonEnabled = false;
+                      _syncBtnText = 'Sync';
+                    });
+                  },
+                  child: const Text(
+                    'Logout',
+                    style: TextStyle(fontWeight: FontWeight.normal),
+                  )),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4.0))),
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ]),
+          ],
+        );
+      },
+    );
   }
 
   void showPopupDialog(
