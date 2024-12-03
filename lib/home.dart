@@ -12,28 +12,23 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _selectedIndex = 0;
-  String title = 'Uni Chat';
-  final tabs = [ const Wishlist(), const Search()];
-  final label = ['Wishlist', 'Search',];
+  final _tabs = [const Wishlist(), const Search()];
+  final _label = [
+    'Wishlist',
+    'Search',
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Theme.of(context).colorScheme.surface,
-      // appBar: AppBar(
-      //   title: Text(label[_selectedIndex]),
-      //   centerTitle: true,
-      //   elevation: 5.0,
-      //   shadowColor: Colors.black12,
-      // ),
-      bottomNavigationBar: BottomNavigation(
+        bottomNavigationBar: BottomNavigation(
           selectedIndex: _selectedIndex,
           onItemSelected: (int index) {
             setState(() {
               _selectedIndex = index;
             });
-          }
-          ,labels: label,),
-      body: tabs[_selectedIndex],
-    );
+          },
+          labels: _label,
+        ),
+        body: _tabs[_selectedIndex]);
   }
 }

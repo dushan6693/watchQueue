@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:watch_queue/models/movie.dart';
 import 'package:watch_queue/read_date.dart';
@@ -6,21 +8,21 @@ import 'package:watch_queue/res/database/dbhandler.dart';
 import 'package:watch_queue/res/database/todos_model.dart';
 
 class ViewPost extends StatefulWidget {
-  final String movieId;
+  final String _movieId;
   const ViewPost({
     super.key,
-    required this.movieId,
-  });
+    required String movieId,
+  }) : _movieId = movieId;
 
   @override
   State<ViewPost> createState() => _ViewPostState();
 }
 
 class _ViewPostState extends State<ViewPost> {
-  bool isAdded = false;
-  ReadDate readDate = ReadDate();
-  DBHandler dbHandler = DBHandler();
-  final String _apiKey = '84a39093';
+  bool _isAdded = false;
+  ReadDate _readDate = ReadDate();
+  DBHandler _dbHandler = DBHandler();
+  final String _apiKey = dotenv.env['MOVIE_API_KEY']!;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,22 +31,28 @@ class _ViewPostState extends State<ViewPost> {
         centerTitle: true,
       ),
       body: FutureBuilder(
-        future: fetchDetailsWithStatus(_apiKey, widget.movieId, dbHandler),
+        future: fetchDetailsWithStatus(_apiKey, widget._movieId, _dbHandler),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return  Center(child:  SpinKitThreeBounce(
-              color: Theme.of(context).colorScheme.primary,
-              size: 25.0,
-            ),);
+            return Center(
+              child: SpinKitThreeBounce(
+                color: Theme.of(context).colorScheme.primary,
+                size: 25.0,
+              ),
+            );
           } else if (snapshot.hasError) {
             return Center(
                 child: Text(
               'Details not found',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3) ,fontSize: 18.0, fontWeight: FontWeight.w100,),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                fontSize: 18.0,
+                fontWeight: FontWeight.w100,
+              ),
             ));
           } else {
             Movie? movie = snapshot.data![0];
-            isAdded = snapshot.data![1];
+            _isAdded = snapshot.data![1];
 
             return Stack(
               children: [
@@ -55,8 +63,11 @@ class _ViewPostState extends State<ViewPost> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Card(
-                          color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHigh,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4.0)),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,7 +75,9 @@ class _ViewPostState extends State<ViewPost> {
                               SizedBox(
                                 width: 170.0,
                                 child: ClipRRect(
-                                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(4.0),bottomLeft: Radius.circular(4.0)),
+                                  borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(4.0),
+                                      bottomLeft: Radius.circular(4.0)),
                                   child: AspectRatio(
                                     aspectRatio: 100.0 / 170.0,
                                     child: Container(
@@ -87,12 +100,14 @@ class _ViewPostState extends State<ViewPost> {
                                     },
                                     children: [
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             'Type :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -105,27 +120,33 @@ class _ViewPostState extends State<ViewPost> {
                                                 ? Colors.green.shade700
                                                 : Colors.red.shade400,
                                             shape: const RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.only(topRight: Radius.circular(4.0))),
+                                                borderRadius: BorderRadius.only(
+                                                    topRight:
+                                                        Radius.circular(4.0))),
                                             child: Center(
                                               child: Text(
                                                 movie.type,
                                                 style: TextStyle(
-                                                    color: Theme.of(context).colorScheme.onPrimary,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onPrimary,
                                                     fontSize: 15.0,
-                                                    fontWeight: FontWeight.normal),
+                                                    fontWeight:
+                                                        FontWeight.normal),
                                               ),
                                             ),
                                           ),
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             'Year :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -135,19 +156,23 @@ class _ViewPostState extends State<ViewPost> {
                                           child: Text(
                                             movie.year,
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.normal),
                                           ),
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             'Released :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -156,20 +181,24 @@ class _ViewPostState extends State<ViewPost> {
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             movie.released,
-                                            style:  TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                            style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.normal),
                                           ),
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             'Rated :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -179,19 +208,23 @@ class _ViewPostState extends State<ViewPost> {
                                           child: Text(
                                             movie.rated,
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.normal),
                                           ),
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             'Runtime :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -200,20 +233,24 @@ class _ViewPostState extends State<ViewPost> {
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             movie.runtime,
-                                            style:  TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                            style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.normal),
                                           ),
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             'Languages :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -223,7 +260,9 @@ class _ViewPostState extends State<ViewPost> {
                                           child: Text(
                                             movie.language,
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.normal),
                                             maxLines: 4,
@@ -232,12 +271,14 @@ class _ViewPostState extends State<ViewPost> {
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(2.0),
                                           child: Text(
                                             'Votes :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -247,19 +288,23 @@ class _ViewPostState extends State<ViewPost> {
                                           child: Text(
                                             movie.imdbVotes,
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.normal),
                                           ),
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(1.0),
                                           child: Text(
                                             'IMDB :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -280,7 +325,9 @@ class _ViewPostState extends State<ViewPost> {
                                               Text(
                                                 movie.imdbRating,
                                                 style: TextStyle(
-                                                    color: Theme.of(context).colorScheme.onSurface,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface,
                                                     fontSize: 15.0,
                                                     fontWeight:
                                                         FontWeight.normal),
@@ -290,12 +337,14 @@ class _ViewPostState extends State<ViewPost> {
                                         ),
                                       ]),
                                       TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(2.0),
                                           child: Text(
                                             'Rotten :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontSize: 15.0,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -318,7 +367,9 @@ class _ViewPostState extends State<ViewPost> {
                                                     ? movie.ratings[1].value
                                                     : 'N/A',
                                                 style: TextStyle(
-                                                    color: Theme.of(context).colorScheme.onSurface,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface,
                                                     fontSize: 15.0,
                                                     fontWeight:
                                                         FontWeight.normal),
@@ -337,11 +388,11 @@ class _ViewPostState extends State<ViewPost> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                           child: Card(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4.0)),
                             color: Theme.of(context)
                                 .colorScheme
-                                .surfaceContainerHigh
-                                ,
+                                .surfaceContainerHigh,
                             child: Row(
                               children: [
                                 Flexible(
@@ -352,7 +403,9 @@ class _ViewPostState extends State<ViewPost> {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
                                           fontSize: 20.0,
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -361,10 +414,14 @@ class _ViewPostState extends State<ViewPost> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 12.0),
                                   child: IconButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        copyText(movie.title);
+                                      },
                                       icon: Icon(
                                         Icons.copy,
-                                        color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       )),
                                 )
                               ],
@@ -380,12 +437,14 @@ class _ViewPostState extends State<ViewPost> {
                               },
                               children: [
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Genre :',
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -394,20 +453,24 @@ class _ViewPostState extends State<ViewPost> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.genre,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Director :',
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -416,20 +479,24 @@ class _ViewPostState extends State<ViewPost> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.director,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Writer :',
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -438,8 +505,10 @@ class _ViewPostState extends State<ViewPost> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.writer,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
@@ -449,12 +518,14 @@ class _ViewPostState extends State<ViewPost> {
                                     ? TableRow(
                                         children: [Container(), Container()])
                                     : TableRow(children: [
-                                         Padding(
+                                        Padding(
                                           padding: const EdgeInsets.all(4.0),
                                           child: Text(
                                             'Seasons :',
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 15.0),
                                           ),
@@ -464,19 +535,23 @@ class _ViewPostState extends State<ViewPost> {
                                           child: Text(
                                             movie.totalSeasons,
                                             style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
                                                 fontWeight: FontWeight.normal,
                                                 fontSize: 15.0),
                                           ),
                                         ),
                                       ]),
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Country :',
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -485,20 +560,24 @@ class _ViewPostState extends State<ViewPost> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.country,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'BoxOffice :',
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -507,20 +586,24 @@ class _ViewPostState extends State<ViewPost> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.boxOffice,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Production :',
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -529,20 +612,24 @@ class _ViewPostState extends State<ViewPost> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.production,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Awards :',
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -551,22 +638,26 @@ class _ViewPostState extends State<ViewPost> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       movie.awards,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontSize: 15.0),
                                     ),
                                   ),
                                 ]),
                                 TableRow(children: [
-                                   Padding(
+                                  Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
                                       'Plot :',
                                       maxLines: 20,
                                       overflow: TextOverflow.fade,
                                       style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15.0),
                                     ),
@@ -577,8 +668,10 @@ class _ViewPostState extends State<ViewPost> {
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 25,
                                       movie.plot,
-                                      style:  TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.normal,
                                           fontStyle: FontStyle.italic,
                                           fontSize: 15.0),
@@ -607,10 +700,11 @@ class _ViewPostState extends State<ViewPost> {
                             child: Container(
                               color: Theme.of(context).colorScheme.surface,
                               child: ElevatedButton(
-                                onPressed: isAdded
+                                onPressed: _isAdded
                                     ? null
                                     : () async {
                                         DBHandler dbHandler = DBHandler();
+                                        //_streamBloc.eventStreamSink.add(true);
                                         setState(() {
                                           dbHandler.insertTodo(TodosModel(
                                               id: movie.imdbId,
@@ -618,19 +712,19 @@ class _ViewPostState extends State<ViewPost> {
                                               name: movie.title,
                                               img: movie.poster,
                                               releaseDate: movie.released,
-                                              listedDate: readDate.getDateNow(),
+                                              listedDate: _readDate.getDateNow(),
                                               watchStatus: 0));
 
-                                         // dbHandler.incrementVersion('version_id01');//increment version_code on Version table by 1. to update the database status.
+                                          // dbHandler.incrementVersion('version_id01');//increment version_code on Version table by 1. to update the database status.
 
-                                          isAdded = true;
-                                          showToast(
+                                          _isAdded = true;
+                                          showToastWithUndo(
                                               '${movie.type} Added to wishlist',
                                               movie.imdbId);
                                         });
                                       },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isAdded
+                                  backgroundColor: _isAdded
                                       ? Theme.of(context)
                                           .colorScheme
                                           .primary
@@ -648,7 +742,7 @@ class _ViewPostState extends State<ViewPost> {
                                       top: 15.0,
                                       bottom: 15.0),
                                 ),
-                                child: isAdded
+                                child: _isAdded
                                     ? const Text('Added')
                                     : const Text("Add To Wishlist"),
                               ),
@@ -696,7 +790,14 @@ class _ViewPostState extends State<ViewPost> {
     return status;
   }
 
-  void showToast(String msg, String id) {
+  void copyText(String toCopy) async {
+    await Clipboard.setData(
+      ClipboardData(text: toCopy),
+    );
+    showToast('Name copied to clipboard');
+  }
+
+  void showToastWithUndo(String msg, String id) {
     final snackBar = SnackBar(
       content: Text(msg),
       duration: const Duration(seconds: 2),
@@ -705,11 +806,19 @@ class _ViewPostState extends State<ViewPost> {
         textColor: Theme.of(context).colorScheme.surface,
         onPressed: () {
           setState(() {
-            dbHandler.deleteTodo(id);
-            isAdded = false;
+            _dbHandler.deleteTodo(id);
+            _isAdded = false;
           });
         },
       ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void showToast(String msg) {
+    final snackBar = SnackBar(
+      content: Text(msg),
+      duration: const Duration(seconds: 2),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
