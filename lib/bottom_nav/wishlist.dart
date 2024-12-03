@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:watch_queue/StreamBloc.dart';
+import 'package:watch_queue/streamBloc.dart';
 import 'package:watch_queue/res/database/dbhandler.dart';
 import 'package:watch_queue/res/database/todos_model.dart';
 import 'package:watch_queue/res/items/item_wishlist.dart';
