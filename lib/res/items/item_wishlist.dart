@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:watch_queue/read_date.dart';
 import '../../view_post.dart';
-import '../database/dbhandler.dart';
 
 class ItemWishList extends StatefulWidget {
   final String id;
@@ -34,8 +33,7 @@ class ItemWishList extends StatefulWidget {
 }
 
 class _ItemWishListState extends State<ItemWishList> {
-  ReadDate readDate = ReadDate();
-  DBHandler dbHandler = DBHandler();
+  ReadDate _readDate = ReadDate();
   @override
   Widget build(BuildContext context) {
     bool status = widget.status;
@@ -139,7 +137,7 @@ class _ItemWishListState extends State<ItemWishList> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    readDate.getDuration(
+                    _readDate.getDuration(
                       widget.date,
                     ),
                     style: TextStyle(
@@ -214,17 +212,22 @@ class _ItemWishListState extends State<ItemWishList> {
             ],
           ),
           actions: <Widget>[
-
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               TextButton(
                 onPressed:
-                status ? widget.markAsUnwatched : widget.markAsWatched,
+                    status ? widget.markAsUnwatched : widget.markAsWatched,
                 child: status
                     ? const Text(
-                  'Mark As Unwatched',
-                  style: TextStyle(fontWeight: FontWeight.normal),
-                )
-                    : Text('Mark As Watched',style: TextStyle(color: status? Theme.of(context).colorScheme.secondary:Theme.of(context).colorScheme.onSurface),),
+                        'Mark As Unwatched',
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      )
+                    : Text(
+                        'Mark As Watched',
+                        style: TextStyle(
+                            color: status
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.onSurface),
+                      ),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
@@ -254,8 +257,8 @@ class _ItemWishListState extends State<ItemWishList> {
                   ),
                   FilledButton(
                     style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0))
-                    ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4.0))),
                     child: const Text('Cancel'),
                     onPressed: () {
                       Navigator.of(context).pop();

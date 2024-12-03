@@ -1,11 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:watch_queue/StreamBloc.dart';
 import 'package:watch_queue/res/database/dbhandler.dart';
 import 'package:watch_queue/res/database/todos_model.dart';
 import 'package:watch_queue/res/items/item_wishlist.dart';
 import 'package:watch_queue/settings.dart';
-
-import '../read_date.dart';
 
 class Wishlist extends StatefulWidget {
   const Wishlist({super.key});
@@ -15,21 +15,43 @@ class Wishlist extends StatefulWidget {
 }
 
 class _WishlistState extends State<Wishlist> {
-  List imdbIdList = [];
-  List typeList = [];
-  List nameList = [];
-  List dateList = [];
-  List releaseList = []; //movie released date
-  List imgList = [];
-  List statusList = []; //is movie watched or not
-  ReadDate readDate = ReadDate();
-  DBHandler dbHandler = DBHandler();
+  List _imdbIdList = [];
+  List _typeList = [];
+  List _nameList = [];
+  List _dateList = [];
+  List _releaseList = []; //movie released date
+  List _imgList = [];
+  List _statusList = []; //is movie watched or not
+  DBHandler _dbHandler = DBHandler();
+  StreamBloc _streamBloc = StreamBloc();
+
+  String _title = 'Wishlist';
   final TextEditingController _searchController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wishlist'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('$_title'),
+            StreamBuilder<Object>(
+                stream: _streamBloc.stateStream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Text(
+                      ' (${snapshot.data})',
+                      style: TextStyle(
+                        fontSize: 16.0,
+                      ),
+                    );
+                  } else {
+                    return Text('');
+                  }
+                }),
+          ],
+        ),
         centerTitle: true,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         actions: <Widget>[
@@ -44,37 +66,50 @@ class _WishlistState extends State<Wishlist> {
         ],
       ),
       body: FutureBuilder(
-        future: getTodos(dbHandler, _searchController.text),
+        future: getTodos(_dbHandler, _searchController.text),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: SpinKitThreeBounce(
-              color: Theme.of(context).colorScheme.primary,
-              size: 25.0,
-            ),);
+            return Center(
+              child: SpinKitThreeBounce(
+                color: Theme.of(context).colorScheme.primary,
+                size: 25.0,
+              ),
+            );
           } else if (snapshot.hasError) {
             return Center(
                 child: Text(
               'Nothing here to show',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),fontSize: 18.0, fontWeight: FontWeight.w100),
+              style: TextStyle(
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w100),
             ));
           } else if (!snapshot.data?[0]) {
             return Center(
               child: Text(
                 'mmm..your wishlist is empty',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),fontSize: 18.0, fontWeight: FontWeight.w100),
+                style: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.3),
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.w100),
               ),
             );
           } else {
             List<dynamic>? todos = snapshot.data;
             for (var todo in todos?[1]!) {
-              imdbIdList.add(todo.id);
-              typeList.add(todo.type);
-              nameList.add(todo.name);
-              dateList.add(todo.listedDate);
-              releaseList.add(todo.releaseDate);
-              imgList.add(todo.img);
-              statusList.add(fromInt(todo.watchStatus));
+              _imdbIdList.add(todo.id);
+              _typeList.add(todo.type);
+              _nameList.add(todo.name);
+              _dateList.add(todo.listedDate);
+              _releaseList.add(todo.releaseDate);
+              _imgList.add(todo.img);
+              _statusList.add(fromInt(todo.watchStatus));
             }
+            _streamBloc.eventStreamSink.add(getCount());
             return Column(
               children: [
                 Padding(
@@ -83,19 +118,20 @@ class _WishlistState extends State<Wishlist> {
                   child: SizedBox(
                     height: 50.0,
                     child: TextField(
-                      onChanged: (value) {
+                      onEditingComplete: () {
                         setState(() {
                           clearLists();
                         });
                       },
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface,),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       controller: _searchController,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
-                                color:
-                                    Theme.of(context).colorScheme.primary,
+                                color: Theme.of(context).colorScheme.primary,
                                 width: 2.0,
                                 style: BorderStyle.solid)),
                         focusedBorder: OutlineInputBorder(
@@ -124,26 +160,27 @@ class _WishlistState extends State<Wishlist> {
                     ),
                     padding: const EdgeInsets.all(2.0),
                     children: [
-                      for (var index = 0; index < nameList.length; index++)
+                      for (var index = 0; index < _nameList.length; index++)
                         Dismissible(
-                            key: Key(nameList[index]),
+                            key: Key(_nameList[index]),
                             direction: DismissDirection.endToStart,
                             onDismissed: (direction) {
                               var map = <String, dynamic>{
-                                'id': imdbIdList[index],
-                                'type': typeList[index],
-                                'name': nameList[index],
-                                'img': imgList[index],
-                                'release_date': releaseList[index],
-                                'listed_date': dateList[index],
-                                'watch_status': statusList[index],
+                                'id': _imdbIdList[index],
+                                'type': _typeList[index],
+                                'name': _nameList[index],
+                                'img': _imgList[index],
+                                'release_date': _releaseList[index],
+                                'listed_date': _dateList[index],
+                                'watch_status': _statusList[index],
                               };
                               setState(() {
-                                dbHandler.deleteTodo(imdbIdList[index]);
+                                _dbHandler.deleteTodo(_imdbIdList[index]);
                                 clearLists();
                                 //getTodos(dbHandler, _searchController.text);
                               });
-                              showToast(dbHandler,
+                              showToast(
+                                  _dbHandler,
                                   '${map['type']} deleted from wishlist',
                                   map['id'],
                                   map);
@@ -157,27 +194,27 @@ class _WishlistState extends State<Wishlist> {
                                   const Icon(Icons.delete, color: Colors.white),
                             ),
                             child: ItemWishList(
-                              id: imdbIdList[index],
-                              type: typeList[index],
-                              name: nameList[index],
-                              date: dateList[index],
-                              img: imgList[index],
-                              release: releaseList[index],
-                              status: statusList[index],
+                              id: _imdbIdList[index],
+                              type: _typeList[index],
+                              name: _nameList[index],
+                              date: _dateList[index],
+                              img: _imgList[index],
+                              release: _releaseList[index],
+                              status: _statusList[index],
                               markAsWatched: () {
                                 setState(() {
-                                  dbHandler.updateWatchStatus(
-                                      toInt(true), imdbIdList[index]);
-                                  statusList[index] = true;
+                                  _dbHandler.updateWatchStatus(
+                                      toInt(true), _imdbIdList[index]);
+                                  _statusList[index] = true;
                                   clearLists();
                                   Navigator.of(context).pop();
                                 });
                               },
                               markAsUnwatched: () {
                                 setState(() {
-                                  dbHandler.updateWatchStatus(
-                                      toInt(false), imdbIdList[index]);
-                                  statusList[index] = false;
+                                  _dbHandler.updateWatchStatus(
+                                      toInt(false), _imdbIdList[index]);
+                                  _statusList[index] = false;
                                   clearLists();
                                   Navigator.of(context).pop();
                                 });
@@ -185,21 +222,22 @@ class _WishlistState extends State<Wishlist> {
                               deleteItem: () {
                                 Navigator.of(context).pop();
                                 var map = <String, dynamic>{
-                                  'id': imdbIdList[index],
-                                  'type': typeList[index],
-                                  'name': nameList[index],
-                                  'img': imgList[index],
-                                  'release_date': releaseList[index],
-                                  'listed_date': dateList[index],
-                                  'watch_status': statusList[index],
+                                  'id': _imdbIdList[index],
+                                  'type': _typeList[index],
+                                  'name': _nameList[index],
+                                  'img': _imgList[index],
+                                  'release_date': _releaseList[index],
+                                  'listed_date': _dateList[index],
+                                  'watch_status': _statusList[index],
                                 };
                                 //print('__________$map');
                                 setState(() {
-                                  dbHandler.deleteTodo(imdbIdList[index]);
+                                  _dbHandler.deleteTodo(_imdbIdList[index]);
                                   clearLists();
                                   //getTodos(dbHandler, _searchController.text);
                                 });
-                                showToast(dbHandler,
+                                showToast(
+                                    _dbHandler,
                                     '${map['type']} deleted from wishlist',
                                     map['id'],
                                     map);
@@ -246,16 +284,17 @@ class _WishlistState extends State<Wishlist> {
   }
 
   void clearLists() {
-    imdbIdList.clear();
-    typeList.clear();
-    nameList.clear();
-    dateList.clear();
-    imgList.clear();
-    releaseList.clear();
-    statusList.clear();
+    _imdbIdList.clear();
+    _typeList.clear();
+    _nameList.clear();
+    _dateList.clear();
+    _imgList.clear();
+    _releaseList.clear();
+    _statusList.clear();
   }
 
-  void showToast(DBHandler dbHandler, String msg, String id, Map<String, dynamic> temp) {
+  void showToast(
+      DBHandler dbHandler, String msg, String id, Map<String, dynamic> temp) {
     final snackBar = SnackBar(
       content: Text(msg),
       duration: const Duration(seconds: 2),
@@ -263,20 +302,28 @@ class _WishlistState extends State<Wishlist> {
         label: 'Undo',
         onPressed: () {
           clearLists();
-          setState(()  {
-             dbHandler.insertTodo(TodosModel(
+          setState(() {
+            dbHandler.insertTodo(TodosModel(
                 id: temp['id'],
                 type: temp['type'],
                 name: temp['name'],
                 img: temp['img'],
                 releaseDate: temp['release_date'],
                 listedDate: temp['listed_date'],
-                watchStatus: toInt(temp['watch_status']) ));
+                watchStatus: toInt(temp['watch_status'])));
           });
         },
       ),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  int getCount() {
+    if (_imdbIdList.isEmpty) {
+      return 0;
+    } else {
+      return _imdbIdList.length;
+    }
   }
 
   @override

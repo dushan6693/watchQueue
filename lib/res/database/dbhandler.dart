@@ -112,6 +112,12 @@ class DBHandler {
 
   }
 
+  Future<int> getTodosCount() async {
+    final db = await database;
+    final result = await db.query('movies');
+    return result.length;
+  }
+
 //update
   Future<int> updateTodo(TodosModel todosModel) async {
     final db = await database;

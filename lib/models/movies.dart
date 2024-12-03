@@ -7,7 +7,7 @@ class Movies {
   final String imdbID;
   final String type;
   final String poster;
-  String? imdbRating; //
+  String? imdbRating;
 
   Movies({
     required this.title,

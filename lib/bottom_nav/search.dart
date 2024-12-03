@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:watch_queue/res/items/item_search.dart';
 import '../models/movies.dart';
@@ -18,13 +19,8 @@ class _SearchState extends State<Search> {
   final List _ratingList = [];
   final List _imgList = [];
   final List _typeList = [];
-  final String _apiKey = '84a39093';
+  final String _apiKey = dotenv.env['MOVIE_API_KEY']!;
   final _searchController = TextEditingController();
-
-  @override
-  void initState(){
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +30,15 @@ class _SearchState extends State<Search> {
             children: [
               Expanded(
                 child: TextField(
+                  onEditingComplete: () {
+                    setState(() {
+                      requestData(_searchController.text, true);
+                    });
+                  },
                   controller: _searchController,
                   maxLines: 1,
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: const InputDecoration(
                     hintText: 'Search here',
                     border: InputBorder.none,
@@ -44,10 +46,13 @@ class _SearchState extends State<Search> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.search,color: Theme.of(context).colorScheme.onSurface,),
+                icon: Icon(
+                  Icons.search,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 onPressed: () {
                   setState(() {
-                    requestData(_searchController.text,true);
+                    requestData(_searchController.text, true);
                   });
                 },
               ),
@@ -55,15 +60,27 @@ class _SearchState extends State<Search> {
           ),
         ),
         body: FutureBuilder(
-          future: requestData(_searchController.text,false),
+          future: requestData(_searchController.text, false),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: SpinKitThreeBounce(
-                color: Theme.of(context).colorScheme.primary,
-                size: 25.0,
-              ),);
+              return Center(
+                child: SpinKitThreeBounce(
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 25.0,
+                ),
+              );
             } else if (snapshot.hasError) {
-              return Center(child: Text('Search something to show...',style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),fontSize: 18.0,fontWeight: FontWeight.w100),));
+              return Center(
+                  child: Text(
+                'Search something to show...',
+                style: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.3),
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.w100),
+              ));
             } else {
               List<Movies>? movies = snapshot.data;
               for (var movie in movies!) {
@@ -80,7 +97,7 @@ class _SearchState extends State<Search> {
                     child: GridView(
                       scrollDirection: Axis.vertical,
                       gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         childAspectRatio: 10 / 19.5,
                         crossAxisSpacing: 0.5,
@@ -103,8 +120,6 @@ class _SearchState extends State<Search> {
                 ],
               );
             }
-
-
           },
         ));
   }
@@ -128,18 +143,18 @@ class _SearchState extends State<Search> {
       SharedPrefs().saveString('search_data', request);
       Future<List<Movies>> movies = Movies.fetchAllMovies(_apiKey, request);
       return movies;
-    }else{
-      if(!pressed){
+    } else {
+      if (!pressed) {
         String? searchText = SharedPrefs().getString('search_data');
-        if(searchText!=''){
-          _searchController.text=searchText!;
-          Future<List<Movies>> movies = Movies.fetchAllMovies(_apiKey, searchText);
+        if (searchText != '') {
+          _searchController.text = searchText!;
+          Future<List<Movies>> movies =
+              Movies.fetchAllMovies(_apiKey, searchText);
           return movies;
         }
-      }else{
+      } else {
         SharedPrefs().saveString('search_data', '');
       }
-
     }
     return Future.error("future list<movie> not found");
   }

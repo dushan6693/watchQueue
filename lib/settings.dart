@@ -20,25 +20,20 @@ class Settings extends StatefulWidget {
 class _SettingsState extends State<Settings> {
   int _time = 0;
   FireStoreService fireStoreService = FireStoreService();
-  AuthService authService = AuthService();
-  DBHandler dbHandler = DBHandler();
-  bool exportStatus = false;
-  bool isExporting = false;
-  bool importStatus = false;
-  bool isImporting = false;
-
-  List imdbIdList = [];
-  List typeList = [];
-  List nameList = [];
-  List dateList = [];
-  List releaseList = []; //movie released date
-  List imgList = [];
-  List statusList = []; //is movie
+  AuthService _authService = AuthService();
+  DBHandler _dbHandler = DBHandler();
+  List _imdbIdList = [];
+  List _typeList = [];
+  List _nameList = [];
+  List _dateList = [];
+  List _releaseList = []; //movie released date
+  List _imgList = [];
+  List _statusList = []; //is movie
   bool _isButtonEnabled = false; //sync button enable or disable
   String _syncBtnText = 'Sync';
   bool _isUserLogged = false; // save user login status
   String _displayName = 'User';
-  String _displayPicture = '';
+  String _displayPicture = 'https://cdn.icon-icons.com/icons2/1812/PNG/512/4213460-account-avatar-head-person-profile-user_115386.png';
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +70,8 @@ class _SettingsState extends State<Settings> {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: CircleAvatar(
                           radius: 45,
-                          backgroundImage: NetworkImage(
+                          backgroundImage:
+                           NetworkImage(
                             _displayPicture,
                           )),
                     ),
@@ -102,7 +98,7 @@ class _SettingsState extends State<Settings> {
                             onPressed: _isUserLogged
                                 ? () async {
                                     setState(() {
-                                      authService.signOut();
+                                      _authService.signOut();
                                       _isUserLogged = false;
                                       _isButtonEnabled = false;
                                       _syncBtnText = 'Sync';
@@ -189,7 +185,7 @@ class _SettingsState extends State<Settings> {
                                   ? () {
                                       setState(() async {
                                         syncManager(
-                                            authService, 'version_id01', true);
+                                            _authService, 'version_id01', true);
                                       });
                                     }
                                   : null,
@@ -223,13 +219,43 @@ class _SettingsState extends State<Settings> {
     return custom;
   }
 
-  Future<VersionModel> getVersion(DBHandler dbHandler, String versionId) async {
+  Future<VersionModel> getLocalVersion(
+      DBHandler dbHandler, String versionId) async {
     return await dbHandler.getVersion(versionId);
+  }
+
+  Future<Map<String, int>> compareDbVersions(
+      AuthService authService, String email, String versionId) async {
+    Map<String, int> dbDetails = {};
+    VersionModel localVersion =
+        await getLocalVersion(_dbHandler, versionId); //local db version code
+
+    DocumentSnapshot<Map<String, dynamic>> docs = await fireStoreService
+        .getDocuments2('todos', email); //cloud db version code
+
+    Map<String, dynamic>? data = docs.data();
+    int cloudVersion = 1;
+    if (data != null) {
+      cloudVersion = data[versionId]; //cloud db version code
+    }
+
+    dbDetails['local'] = localVersion.versionCode;
+    dbDetails['cloud'] = cloudVersion;
+    if (localVersion.versionCode == cloudVersion) {
+      dbDetails['status'] = 0;
+      return dbDetails;
+    } else if (localVersion.versionCode > cloudVersion) {
+      dbDetails['status'] = 1;
+      return dbDetails;
+    } else {
+      dbDetails['status'] = -1;
+      return dbDetails;
+    }
   }
 
   Future<bool> syncManager(
       AuthService authService, String versionId, bool isSync) async {
-//isSync use for should sync or not data with cloud. true=sync,false=not sync
+    //isSync use for should sync or not data with cloud. true=sync,false=not sync
     User? user = await authService.getSignedUser();
     if (user != null) {
       String? email = user.email;
@@ -243,47 +269,47 @@ class _SettingsState extends State<Settings> {
         _syncBtnText = 'Sync';
         _isButtonEnabled = true;
       });
+      Map<String, int> value =
+          await compareDbVersions(authService, email, versionId);
+      int? versionStatus = value['status'];
+      int? localVersionCode = value['local'];
+      int? cloudVersionCode = value['cloud'];
 
-      VersionModel localVersion =
-          await getVersion(dbHandler, versionId); //local db version code
-      DocumentSnapshot<Map<String, dynamic>> docs = await fireStoreService
-          .getDocuments2('todos', email); //cloud db version code
-
-      Map<String, dynamic>? data = docs.data();
-      int cloudVersion = 1;
-      if (data != null) {
-        cloudVersion = data[versionId]; //cloud db version code
-      }
-      if (localVersion.versionCode == cloudVersion) {
-        //do not sync
-        setState(() {
-          _syncBtnText = 'Synced';
-          _isButtonEnabled = false;
-        });
-
-        return false; //to notify button to disable.
-      } else if (localVersion.versionCode > cloudVersion) {
-        // export(user, versionId, localVersion.versionCode)
-        if (mounted) {
-          isSync
-              ? showPopupDialog(
-                  context,
-                  export,
-                  user,
-                  versionId,
-                  localVersion.versionCode,
-                  'You have to export Wishlist to cloud. This process cannot be reversed. Do the sync process?')
-              : null;
-        }
-        return true;
-      } else {
-        if (mounted) {
-          isSync
-              ? showPopupDialog(context, import, user, versionId, cloudVersion,
-                  'You have to import data from cloud to your Wishlist. This process cannot be reversed. Do the sync process?')
-              : null;
-        }
-        return true;
+      switch (versionStatus) {
+        case 0:
+          setState(() {
+            _syncBtnText = 'Synced';
+            _isButtonEnabled = false;
+          });
+          return false; //to notify button to disable.
+        case 1:
+          if (mounted) {
+            isSync
+                ? showPopupDialog(
+                    context,
+                    export,
+                    user,
+                    versionId,
+                    localVersionCode!,
+                    'You have to export Wishlist to cloud. This process cannot be reversed. Do the sync process?')
+                : null;
+          }
+          return true;
+        case -1:
+          if (mounted) {
+            isSync
+                ? showPopupDialog(
+                    context,
+                    import,
+                    user,
+                    versionId,
+                    cloudVersionCode!,
+                    'You have to import data from cloud to your Wishlist. This process cannot be reversed. Do the sync process?')
+                : null;
+          }
+          return true;
+        default:
+          return false;
       }
     } else {
       setState(() {
@@ -305,25 +331,25 @@ class _SettingsState extends State<Settings> {
       });
       String? email = user.email;
 
-      List<dynamic>? todos = await getTodos(dbHandler);
+      List<dynamic>? todos = await getTodos(_dbHandler);
 
       if (todos[0]) {
         for (var todo in todos[1]!) {
-          imdbIdList.add(todo.id);
-          typeList.add(todo.type);
-          nameList.add(todo.name);
-          dateList.add(todo.listedDate);
-          releaseList.add(todo.releaseDate);
-          imgList.add(todo.img);
-          statusList.add(fromInt(todo.watchStatus));
+          _imdbIdList.add(todo.id);
+          _typeList.add(todo.type);
+          _nameList.add(todo.name);
+          _dateList.add(todo.listedDate);
+          _releaseList.add(todo.releaseDate);
+          _imgList.add(todo.img);
+          _statusList.add(fromInt(todo.watchStatus));
         }
       } else {
         List<Map<String, dynamic>> moviesFromCloud =
             await fireStoreService.getDocuments('todos', email!, 'movies');
 
         for (var movie in moviesFromCloud) {
-          if (await dbHandler.isAvailable(movie['id'])) {
-            dbHandler.updateTodo(TodosModel(
+          if (await _dbHandler.isAvailable(movie['id'])) {
+            _dbHandler.updateTodo(TodosModel(
                 id: movie['id'],
                 type: movie['type'],
                 name: movie['name'],
@@ -332,7 +358,7 @@ class _SettingsState extends State<Settings> {
                 listedDate: movie['listedDate'],
                 watchStatus: toInt(movie['watchStatus'])));
           } else {
-            dbHandler.insertTodo(TodosModel(
+            _dbHandler.insertTodo(TodosModel(
                 id: movie['id'],
                 type: movie['type'],
                 name: movie['name'],
@@ -342,7 +368,7 @@ class _SettingsState extends State<Settings> {
                 watchStatus: toInt(movie['watchStatus'])));
           }
         }
-        dbHandler
+        _dbHandler
             .updateVersion(//update local db version code
                 VersionModel(id: versionId, versionCode: cloudDbVersionCode))
             .whenComplete(() {
@@ -366,22 +392,22 @@ class _SettingsState extends State<Settings> {
         _isButtonEnabled = false;
       });
       String? email = user.email;
-      List<dynamic>? todos = await getTodos(dbHandler);
+      List<dynamic>? todos = await getTodos(_dbHandler);
 
       if (todos[0]) {
         for (var todo in todos[1]!) {
-          imdbIdList.add(todo.id);
-          typeList.add(todo.type);
-          nameList.add(todo.name);
-          dateList.add(todo.listedDate);
-          releaseList.add(todo.releaseDate);
-          imgList.add(todo.img);
-          statusList.add(fromInt(todo.watchStatus));
+          _imdbIdList.add(todo.id);
+          _typeList.add(todo.type);
+          _nameList.add(todo.name);
+          _dateList.add(todo.listedDate);
+          _releaseList.add(todo.releaseDate);
+          _imgList.add(todo.img);
+          _statusList.add(fromInt(todo.watchStatus));
         }
         await fireStoreService.deleteCollection('todos', email!, 'movies');
 
-        await fireStoreService.setMovies(email, imdbIdList, typeList, nameList,
-            dateList, releaseList, imgList, statusList);
+        await fireStoreService.setMovies(email, _imdbIdList, _typeList, _nameList,
+            _dateList, _releaseList, _imgList, _statusList);
         await fireStoreService
             .setVersion(email, versionId, localDbVersionCode)
             .whenComplete(() {
@@ -429,7 +455,7 @@ class _SettingsState extends State<Settings> {
   void initState() {
     super.initState();
     _updateHour();
-    updateButtonState('version_id01');
+    syncManager(_authService, 'version_id01', false);
   }
 
   void _updateHour() {
@@ -464,10 +490,6 @@ class _SettingsState extends State<Settings> {
       duration: const Duration(seconds: 2),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
-  Future<void> updateButtonState(String versionId) async {
-    await syncManager(authService, versionId, false);
   }
 
   void showPopupDialog(
